@@ -5,5 +5,5 @@ ipch/
 *.opensdf
 *.sdf
 *.cachefile
-./debug/
+debug/
 
