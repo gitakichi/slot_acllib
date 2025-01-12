@@ -32,11 +32,11 @@ int upper(int disp);
 int lower(int disp);
 void timerEvent(int key);
 int Setup(void);
-int slot(int *wallet,int *n,int *win,int *lose,int *disp_num);
+int slot(int *wallet,int *win,int *lose,int *disp_num);
 int delay_ctrl(int *rand_num,int *disp_num,int state);
 
 
-int timerID = 0,flag = 0,wallet = 5,n = 0,win = 0,lose = 0;
+int timerID = 0,flag = 0,wallet = 5,win = 0,lose = 0;
 char img_name[N_IMG][32] = {"..\\img\\slot_0.jpg","..\\img\\slot_1.jpg","..\\img\\slot_2.jpg","..\\img\\slot_3.jpg","..\\img\\slot_4.jpg",
 							"..\\img\\slot_5.jpg","..\\img\\slot_6.jpg","..\\img\\slot_7.jpg","..\\img\\slot_8.jpg","..\\img\\slot_9.jpg",
 							"..\\img\\win.jpg","..\\img\\title.jpg",
@@ -97,7 +97,7 @@ void timerEvent(int id)
 		handle = 0;
 	}
 	
-	state = slot(&wallet,&n,&win,&lose,disp_num);
+	state = slot(&wallet,&win,&lose,disp_num);
 	
 
 	beginPaint();
@@ -170,7 +170,7 @@ int Setup(void)
 	return 0;
 }
 
-int slot(int *wallet,int *n,int *win,int *lose,int *disp_num)
+int slot(int *wallet,int *win,int *lose,int *disp_num)
 {
 	static int rand_num[3] = {0,0,0};
 	static int state = 0;
@@ -183,7 +183,6 @@ int slot(int *wallet,int *n,int *win,int *lose,int *disp_num)
 			if(*wallet >= FEE){
 				*wallet -= FEE; 
 				state++;
-				*n++;
 			}
 		}
 		else if(state >= 1 && state <= 3){
