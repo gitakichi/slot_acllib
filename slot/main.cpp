@@ -42,6 +42,16 @@
 //other
 #define KBEVENT_AVAILABLE	1
 
+//seg rotate mode
+#define ROTATE_SEG			2
+#define DECERATE_SEG		1
+#define STOPPED_SEG			0
+
+//seg ctrl mode
+#define ROTATE_REQ			0
+#define SELECT_REQ			1
+#define PREVIOUA_SEG_REQ	2
+
 
 void MouseEvent(int x, int y, int button, int event);
 void KeyboardEvent(int key, int event);
@@ -51,6 +61,7 @@ void timerEvent(int key);
 int Setup(void);
 int slot(int *wallet, int *disp_num);
 int delay_ctrl(int *rand_num,int *disp_num,int state);
+void delay_ctrl_seg(int* rand_num, int* disp_num, int *seg_rotate_stt, int dispMode, int seg);
 
 
 int timerID = 0,flag = 0,wallet = DEFAULT_WALLET;
@@ -112,10 +123,10 @@ int lower(int disp)
 void timerEvent(int id)
 {
 	char str[16];
-	static int state = STANDBY_GAME;
+	int state;
 	static int handle = 0;
 	static clock_t time0,time1;
-	static int disp_num[3] = {0,0,0};
+	static int disp_num[3] = {7,8,9};
 	
 
 	if(flag == 1){
@@ -215,7 +226,7 @@ int slot(int *wallet, int *disp_num)
 				state++;
 			}
 		}
-		else if(state >= 1 && state <= 3){
+		else if(state >= DECISION_SEG0 && state <= DECISION_SEG2){
 			state++;
 		}
 	}
@@ -260,6 +271,7 @@ int slot(int *wallet, int *disp_num)
 	}
 
 	busy = delay_ctrl(rand_num, disp_num, state);
+	
 
 	return state;
 }
@@ -268,64 +280,35 @@ int slot(int *wallet, int *disp_num)
 int delay_ctrl(int *rand_num,int *disp_num,int state)
 {
 	int busy;
-	static int delay_cnt[3] = {0,0,0};
-	static int cycle[3] = {1,1,1};
+	static int seg_rotate_stt[3];
 
-	if(state > 0 && state <= 1){
-		if(disp_num[0] == MAX)	disp_num[0] = MIN;
-		else disp_num[0]++;
-		delay_cnt[0] = 0;
-		cycle[0] = 0;
+	if (state == DECISION_SEG0) {
+		delay_ctrl_seg(rand_num, disp_num, seg_rotate_stt, ROTATE_REQ, 0);//表示する数字を順に変える
+		delay_ctrl_seg(rand_num, disp_num, seg_rotate_stt, ROTATE_REQ, 1);//表示する数字を順に変える
+		delay_ctrl_seg(rand_num, disp_num, seg_rotate_stt, ROTATE_REQ, 2);//表示する数字を順に変える
 	}
-	else if(rand_num[0] != disp_num[0] || cycle[0] == 0){
-		//delay control
-		if(delay_cnt[0] == 2){
-			if(rand_num[0] == disp_num[0])	cycle[0]++;
-			delay_cnt[0] = 0;
-			if(disp_num[0] == MAX)	disp_num[0] = MIN;
-			else disp_num[0]++;
-		}
-		else delay_cnt[0]++;
+	else if (state == DECISION_SEG1) {
+		delay_ctrl_seg(rand_num, disp_num, seg_rotate_stt, SELECT_REQ, 0);//目標値で止める
+		delay_ctrl_seg(rand_num, disp_num, seg_rotate_stt, ROTATE_REQ, 1);//表示する数字を順に変える
+		delay_ctrl_seg(rand_num, disp_num, seg_rotate_stt, ROTATE_REQ, 2);//表示する数字を順に変える
 	}
-	else if(cycle[0] == 1)	cycle[0]++;//TBD
+	else if (state == DECISION_SEG2) {
+		delay_ctrl_seg(rand_num, disp_num, seg_rotate_stt, SELECT_REQ, 0);//目標値で止める
+		delay_ctrl_seg(rand_num, disp_num, seg_rotate_stt, SELECT_REQ, 1);//目標値で止める
+		delay_ctrl_seg(rand_num, disp_num, seg_rotate_stt, ROTATE_REQ, 2);//表示する数字を順に変える
+	}
+	else if (state == RESULT_JUDGE) {
+		delay_ctrl_seg(rand_num, disp_num, seg_rotate_stt, SELECT_REQ, 0);//目標値で止める
+		delay_ctrl_seg(rand_num, disp_num, seg_rotate_stt, SELECT_REQ, 1);//目標値で止める
+		delay_ctrl_seg(rand_num, disp_num, seg_rotate_stt, SELECT_REQ, 2);//目標値で止める
+	}
+	else {
+		delay_ctrl_seg(rand_num, disp_num, seg_rotate_stt, PREVIOUA_SEG_REQ, 0);//前回値を表示する
+		delay_ctrl_seg(rand_num, disp_num, seg_rotate_stt, PREVIOUA_SEG_REQ, 1);//前回値を表示する
+		delay_ctrl_seg(rand_num, disp_num, seg_rotate_stt, PREVIOUA_SEG_REQ, 2);//前回値を表示する
+	}
 
-	if(state > 0 && state <= 2){
-		if(disp_num[1] == MAX)	disp_num[1] = MIN;
-		else disp_num[1]++;
-		delay_cnt[1] = 0;
-		cycle[1] = 0;
-	}
-	else if(rand_num[1] != disp_num[1] || cycle[1] == 0){
-		//delay control
-		if(delay_cnt[1] == 2){
-			if(rand_num[1] == disp_num[1])	cycle[1]++;
-			delay_cnt[1] = 0;
-			if(disp_num[1] == MAX)	disp_num[1] = MIN;
-			else disp_num[1]++;
-		}
-		else delay_cnt[1]++;
-	}
-	else if(cycle[1] == 1)	cycle[1]++;//TBD
-
-	if(state > 0 && state <= 3){
-		if(disp_num[2] == MAX)	disp_num[2] = MIN;
-		else disp_num[2]++;
-		delay_cnt[2] = 0;
-		cycle[2] = 0;
-	}
-	else if(rand_num[2] != disp_num[2] || cycle[2] == 0){
-		//delay control
-		if(delay_cnt[2] == 2){
-			if(rand_num[2] == disp_num[2])	cycle[2]++;
-			delay_cnt[2] = 0;
-			if(disp_num[2] == MAX)	disp_num[2] = MIN;
-			else disp_num[2]++;
-		}
-		else delay_cnt[2]++;
-	}
-	else if(cycle[2] == 1)	cycle[2]++;//TBD
-
-	if(cycle[0] == 2 && cycle[1] == 2 && cycle[2] == 2){//TBD
+	if(seg_rotate_stt[0] == STOPPED_SEG && seg_rotate_stt[1] == STOPPED_SEG && seg_rotate_stt[2] == STOPPED_SEG){
 		busy = 0;
 	}
 	else busy = 1;
@@ -333,3 +316,35 @@ int delay_ctrl(int *rand_num,int *disp_num,int state)
 	return busy;
 }
 
+void delay_ctrl_seg(int *rand_num, int *disp_num, int *seg_rotate_stt, int dispMode,int seg) {
+	if (dispMode == 1) {//表示する数字を順に変える
+		if (disp_num[seg] == MAX)	disp_num[seg] = MIN;
+		else disp_num[seg]++;
+		seg_rotate_stt[seg] = ROTATE_SEG;//表示値選択中
+	}
+	else if (dispMode == 2) {//目標値で止める
+		if (disp_num[seg] == rand_num[seg]) {
+			if (seg_rotate_stt[seg] == ROTATE_SEG) {
+				if (disp_num[seg] == MAX) {
+					disp_num[seg] = MIN;
+				}
+				else {
+					disp_num[seg]++;
+				}
+				seg_rotate_stt[seg] = DECERATE_SEG;//表示値に1度達する
+			}
+
+			else if (seg_rotate_stt[seg] == DECERATE_SEG) {
+				seg_rotate_stt[seg] = STOPPED_SEG;//表示値に2度達する
+			}
+		}
+		else{
+			if (disp_num[seg] == MAX) {
+				disp_num[seg] = MIN;
+			}
+			else {
+				disp_num[seg]++;
+			}
+		}
+	}
+}
