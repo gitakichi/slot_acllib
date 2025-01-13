@@ -25,6 +25,7 @@
 #define	MIN				0//TBD
 #define NORMALMODE		0
 #define ONLYWINMODE		1
+#define TOGGLE_DBG		17//Ctrl
 
 
 void MouseEvent(int x, int y, int button, int event);
@@ -43,8 +44,8 @@ char img_name[N_IMG][32] = {"..\\img\\slot_0.jpg","..\\img\\slot_1.jpg","..\\img
 							"..\\img\\win.jpg","..\\img\\title.jpg",
 							"..\\img\\top_ungle.jpg","..\\img\\down_ungle.jpg","..\\img\\lisboa.jpg","..\\img\\medal.jpg"};
 
-//int dbgmode = NORMALMODE;
-int dbgmode = ONLYWINMODE;
+int dbgmode = NORMALMODE;
+//int dbgmode = ONLYWINMODE;
 
 ACL_Image img[N_IMG];
 ACL_Sound mp3[2];
@@ -64,11 +65,22 @@ void MouseEvent(int x, int y, int button, int event)
 void KeyboardEvent(int key, int event)
 {
 	if(event == 1){
-		if(key == START)			flag = 1;
+		if (key == START) {
+			flag = 1;
+		}
 		else if(key == ADD_COIN){
 			wallet += 5;
 			playSound(mp3[0], 0);
 		}
+		else if (key == TOGGLE_DBG) {
+			if (dbgmode == NORMALMODE) {
+				dbgmode = ONLYWINMODE;
+			}
+			else if (dbgmode == ONLYWINMODE) {
+				dbgmode = NORMALMODE;
+			}
+		}
+		//printf("%d\n", key);
 	}
 }
 
