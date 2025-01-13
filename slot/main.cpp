@@ -18,14 +18,29 @@
 //game setting
 #define FEE				1
 #define REWARD			10
-#define START			13//return key
-#define ADD_COIN		27//esc key
+#define DEFAULT_WALLET	5
 #define PAT				10//TBD
 #define MAX				9//TBD
 #define	MIN				0//TBD
 #define NORMALMODE		0
 #define ONLYWINMODE		1
+
+//key map list
+#define START			13//return key
+#define ADD_COIN		27//esc key
 #define TOGGLE_DBG		17//Ctrl
+
+//game state list
+#define STANDBY_GAME		0
+#define DECISION_SEG0		1
+#define DECISION_SEG1		2
+#define DECISION_SEG2		3
+#define RESULT_JUDGE		4
+#define MESSEAGE_WIN		5
+#define MESSEAGE_WIN_CLR	6
+
+//other
+#define KBEVENT_AVAILABLE	1
 
 
 void MouseEvent(int x, int y, int button, int event);
@@ -34,23 +49,21 @@ int upper(int disp);
 int lower(int disp);
 void timerEvent(int key);
 int Setup(void);
-int slot(int *wallet,int *win,int *lose,int *disp_num);
+int slot(int *wallet, int *disp_num);
 int delay_ctrl(int *rand_num,int *disp_num,int state);
 
 
-int timerID = 0,flag = 0,wallet = 5,win = 0,lose = 0;
+int timerID = 0,flag = 0,wallet = DEFAULT_WALLET;
 char img_name[N_IMG][32] = {"..\\img\\slot_0.jpg","..\\img\\slot_1.jpg","..\\img\\slot_2.jpg","..\\img\\slot_3.jpg","..\\img\\slot_4.jpg",
 							"..\\img\\slot_5.jpg","..\\img\\slot_6.jpg","..\\img\\slot_7.jpg","..\\img\\slot_8.jpg","..\\img\\slot_9.jpg",
 							"..\\img\\win.jpg","..\\img\\title.jpg",
 							"..\\img\\top_ungle.jpg","..\\img\\down_ungle.jpg","..\\img\\lisboa.jpg","..\\img\\medal.jpg"};
 
 int dbgmode = NORMALMODE;
-//int dbgmode = ONLYWINMODE;
 
 ACL_Image img[N_IMG];
 ACL_Sound mp3[2];
 
-int bias[3] = {0,0,0};
 
 void MouseEvent(int x, int y, int button, int event)
 {
@@ -64,7 +77,7 @@ void MouseEvent(int x, int y, int button, int event)
 
 void KeyboardEvent(int key, int event)
 {
-	if(event == 1){
+	if(event == KBEVENT_AVAILABLE){
 		if (key == START) {
 			flag = 1;
 		}
@@ -99,7 +112,7 @@ int lower(int disp)
 void timerEvent(int id)
 {
 	char str[16];
-	static int state;
+	static int state = STANDBY_GAME;
 	static int handle = 0;
 	static clock_t time0,time1;
 	static int disp_num[3] = {0,0,0};
@@ -114,26 +127,29 @@ void timerEvent(int id)
 		handle = 0;
 	}
 	
-	state = slot(&wallet,&win,&lose,disp_num);
+	state = slot(&wallet, disp_num);
 	
 
 	beginPaint();
-	putImage(&img[lower(disp_num[0])], X_SEG_0, Y_LOWER+bias[0]);
-	putImage(&img[lower(disp_num[1])], X_SEG_1, Y_LOWER+bias[1]);
-	putImage(&img[lower(disp_num[2])], X_SEG_2, Y_LOWER+bias[2]);
-	putImage(&img[disp_num[0]], X_SEG_0, Y_CENTER+bias[0]);
-	putImage(&img[disp_num[1]], X_SEG_1, Y_CENTER+bias[1]);
-	putImage(&img[disp_num[2]], X_SEG_2, Y_CENTER+bias[2]);
-	putImage(&img[upper(disp_num[0])], X_SEG_0, Y_UPPER+bias[0]);
-	putImage(&img[upper(disp_num[1])], X_SEG_1, Y_UPPER+bias[1]);
-	putImage(&img[upper(disp_num[2])], X_SEG_2, Y_UPPER+bias[2]);
+	//seg0
+	putImage(&img[lower(disp_num[0])], X_SEG_0, Y_LOWER);
+	putImage(&img[disp_num[0]], X_SEG_0, Y_CENTER);
+	putImage(&img[upper(disp_num[0])], X_SEG_0, Y_UPPER);
+	//seg1
+	putImage(&img[lower(disp_num[1])], X_SEG_1, Y_LOWER);
+	putImage(&img[disp_num[1]], X_SEG_1, Y_CENTER);
+	putImage(&img[upper(disp_num[1])], X_SEG_1, Y_UPPER);
+	//seg2
+	putImage(&img[lower(disp_num[2])], X_SEG_2, Y_LOWER);
+	putImage(&img[disp_num[2]], X_SEG_2, Y_CENTER);
+	putImage(&img[upper(disp_num[2])], X_SEG_2, Y_UPPER);
 
-	if(state == 5){
+	if(state == MESSEAGE_WIN){
 		playSound(mp3[1], 0);
 	}
 	setBrushColor(WHITE);
 	setPenColor(WHITE);
-	if(state == 6){
+	if(state == MESSEAGE_WIN_CLR){
 		putImage(&img[10], X_SEG_0, 200);//TBD
 		putImage(&img[15], X_SEG_1, 480);
 	}
@@ -141,18 +157,15 @@ void timerEvent(int id)
 		rectangle(160, 480, WIDTH, 640);
 	}
 
-	//rectangle(0, 0, WIDTH, 80);
 	putImage(&img[11], X_SEG_0, Y_LOWER);
 	rectangle(0, 400, WIDTH, 480);
 	setPenWidth(1);
 	setPenColor(RED);
-	line(0, 240, 480, 240);
-	//line(0, 320, 480, 320);	
+	line(0, 240, 480, 240);	
 
 	setTextColor(BLACK);
 	setTextBkColor(EMPTY);
 	setTextSize(70);
-	//setTextFont(char *pFontName);
 	sprintf_s(str,16,"wallet:%d",wallet);
 	paintText(0, 400, str);
 
@@ -187,10 +200,10 @@ int Setup(void)
 	return 0;
 }
 
-int slot(int *wallet,int *win,int *lose,int *disp_num)
+int slot(int *wallet, int *disp_num)
 {
 	static int rand_num[3] = {0,0,0};
-	static int state = 0;
+	static int state = STANDBY_GAME;
 	static int busy;
 	static clock_t time0,time1;
 
@@ -207,22 +220,18 @@ int slot(int *wallet,int *win,int *lose,int *disp_num)
 		}
 	}
 	
-	if(state == 1){
+	if(state == DECISION_SEG0){
 		rand_num[0] = rand() % PAT + MIN;
-		rand_num[1] = rand() % PAT + MIN;
-		rand_num[2] = rand() % PAT + MIN;
 	}
-	else if(state == 2){
+	else if(state == DECISION_SEG1){
 		if (dbgmode == NORMALMODE) {
 			rand_num[1] = rand() % PAT + MIN;
-			rand_num[2] = rand() % PAT + MIN;
 		}
 		else if (dbgmode == ONLYWINMODE) {
 			rand_num[1] = rand_num[0];
-			rand_num[2] = rand() % PAT + MIN;
 		}
 	}
-	else if(state == 3){
+	else if(state == DECISION_SEG2){
 		if (dbgmode == NORMALMODE) {
 			rand_num[2] = rand() % PAT + MIN;
 		}
@@ -230,30 +239,23 @@ int slot(int *wallet,int *win,int *lose,int *disp_num)
 			rand_num[2] = rand_num[0];
 		}
 	}
-	else if(state == 4 && busy == 0){//TBD
-		if (dbgmode == ONLYWINMODE) {
-			state++;
+	else if(state == RESULT_JUDGE && busy == 0){//TBD
+		if (rand_num[0] == rand_num[1] && rand_num[0] == rand_num[2]) {//TBD
+			state = MESSEAGE_WIN;
 		}
-		else if(dbgmode == NORMALMODE) {
-			if (rand_num[0] == rand_num[1] && rand_num[0] == rand_num[2]) {//TBD
-				state++;
-			}
-			else {
-				(*lose)++;
-				state = 0;
-			}
+		else {
+			state = STANDBY_GAME;
 		}
 	}
-	else if(state == 5){//only win
-		(*win)++;
+	else if(state == MESSEAGE_WIN){
 		*wallet += REWARD;
 		time0 = clock();
 		state++;
 	}
-	else if(state == 6){
+	else if(state == MESSEAGE_WIN_CLR){
 		time1 = clock();
 		if((int)time1 - time0 > WIN_T){
-			state = 0;
+			state = STANDBY_GAME;
 		}
 	}
 
