@@ -317,12 +317,12 @@ int delay_ctrl(int *rand_num,int *disp_num,int state)
 }
 
 void delay_ctrl_seg(int *rand_num, int *disp_num, int *seg_rotate_stt, int dispMode,int seg) {
-	if (dispMode == 1) {//表示する数字を順に変える
+	if (dispMode == ROTATE_REQ) {//表示する数字を順に変える
 		if (disp_num[seg] == MAX)	disp_num[seg] = MIN;
 		else disp_num[seg]++;
 		seg_rotate_stt[seg] = ROTATE_SEG;//表示値選択中
 	}
-	else if (dispMode == 2) {//目標値で止める
+	else if (dispMode == SELECT_REQ) {//目標値で止める
 		if (disp_num[seg] == rand_num[seg]) {
 			if (seg_rotate_stt[seg] == ROTATE_SEG) {
 				if (disp_num[seg] == MAX) {
