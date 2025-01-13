@@ -16,14 +16,15 @@
 #define WIN_T		CLOCKS_PER_SEC*2
 
 //game setting
-#define FEE			1
-#define REWARD		10
-#define START		13//return key
-#define ADD_COIN	27//esc key
-#define PAT			10//TBD
-#define MAX			9//TBD
-#define	MIN			0//TBD
-//#define TEST		0
+#define FEE				1
+#define REWARD			10
+#define START			13//return key
+#define ADD_COIN		27//esc key
+#define PAT				10//TBD
+#define MAX				9//TBD
+#define	MIN				0//TBD
+#define NORMALMODE		0
+#define ONLYWINMODE		1
 
 
 void MouseEvent(int x, int y, int button, int event);
@@ -41,6 +42,10 @@ char img_name[N_IMG][32] = {"..\\img\\slot_0.jpg","..\\img\\slot_1.jpg","..\\img
 							"..\\img\\slot_5.jpg","..\\img\\slot_6.jpg","..\\img\\slot_7.jpg","..\\img\\slot_8.jpg","..\\img\\slot_9.jpg",
 							"..\\img\\win.jpg","..\\img\\title.jpg",
 							"..\\img\\top_ungle.jpg","..\\img\\down_ungle.jpg","..\\img\\lisboa.jpg","..\\img\\medal.jpg"};
+
+//int dbgmode = NORMALMODE;
+int dbgmode = ONLYWINMODE;
+
 ACL_Image img[N_IMG];
 ACL_Sound mp3[2];
 
@@ -197,24 +202,36 @@ int slot(int *wallet,int *n,int *win,int *lose,int *disp_num)
 		rand_num[2] = rand() % PAT + MIN;
 	}
 	else if(state == 2){
-		rand_num[1] = rand() % PAT + MIN;
-		rand_num[2] = rand() % PAT + MIN;
+		if (dbgmode == NORMALMODE) {
+			rand_num[1] = rand() % PAT + MIN;
+			rand_num[2] = rand() % PAT + MIN;
+		}
+		else if (dbgmode == ONLYWINMODE) {
+			rand_num[1] = rand_num[0];
+			rand_num[2] = rand() % PAT + MIN;
+		}
 	}
 	else if(state == 3){
-		rand_num[2] = rand() % PAT + MIN;
+		if (dbgmode == NORMALMODE) {
+			rand_num[2] = rand() % PAT + MIN;
+		}
+		else if (dbgmode == ONLYWINMODE) {
+			rand_num[2] = rand_num[0];
+		}
 	}
 	else if(state == 4 && busy == 0){//TBD
-		#ifdef TEST
-		state++;
-		#else
-		if(rand_num[0] == rand_num[1] && rand_num[0] == rand_num[2]){//TBD
+		if (dbgmode == ONLYWINMODE) {
 			state++;
 		}
-		else{
-			(*lose)++;
-			state = 0;
+		else if(dbgmode == NORMALMODE) {
+			if (rand_num[0] == rand_num[1] && rand_num[0] == rand_num[2]) {//TBD
+				state++;
+			}
+			else {
+				(*lose)++;
+				state = 0;
+			}
 		}
-		#endif
 	}
 	else if(state == 5){//only win
 		(*win)++;
